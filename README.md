@@ -20,10 +20,10 @@
 ```bash
 video-analyzer/
 ├─ .gitignore
-├─ requirements.txt
-├─ run-gradio.py
-│─ qwen-vl-utils/
-│─ web_demo_streaming/
+├─ run-gradio.py # 그라디오 UI 실행
+│─ qwen-vl-utils/ # QwenVL2의 주요 기능 집합
+│─ web_demo_streaming/ # 예제 폴더로 거의 미사용
+├─ requirements.txt # 프로그램 관련 설치 될 파이썬 라이브러리들 정보
 ├─ docker-compose.yml # 도커 컴포즈 설정 파일
 ├─ Dockerfile # 도커 설정 파일
 ├─ docker-build.cmd # 1) 빌드해서 실행: 로컬에서 컨테이너 이미지 빌드
@@ -32,10 +32,10 @@ video-analyzer/
 ├─ docker-pull.cmd # 2) 빌드안하고 Pull 받아서 실행: kmong 개발자 개인 docker hub 저장소에서 받아서 하시고 싶은 경우
 ├─ docker-push.cmd # 3) 현재 버전의 도커 이미지를 개인 저장소에 push해서 저장하고 싶은 경우, 파일 내 경로 수정하여 사용
 ├─ tail-logs.cmd # 컨테이너 이미지내 로그 확인
-├─ models/ # 모델 캐시 및 다운로드 폴더
-├─ videos/ # 업로드할 비디오 저장 폴더
-├─ outputs/ # 분석 결과 텍스트 저장 폴더
-└─ README.md # 애플리케이션 설치 안내
+├─ models/ # Vision Language 모델 캐시/다운로드 폴더
+├─ videos/ # 업로드 된 비디오 저장 폴더
+├─ outputs/ # 영상 분석 결과 텍스트 파일 저장 폴더
+└─ README.md # 애플리케이션 설치 안내 파일
 
 > `models`, `videos`, `outputs` 폴더는 호스트와 컨테이너 간 볼륨으로 자동 마운트됩니다.
 
@@ -73,9 +73,9 @@ tail-logs.cmd
 ## 7. 볼륨 및 환경 변수
 | 호스트 폴더   | 컨테이너 경로                         | 설명      |
 | ----------- |-------------------------------------|-----------|
-| `./models`  | `/workspace/video_analyzer/models`  | 모델 캐시   |
-| `./videos`  | `/workspace/video_analyzer/videos`  | 업로드 영상 |
-| `./outputs` | `/workspace/video_analyzer/outputs` | 분석 텍스트 |
+| `./models`  | `/workspace/video_analyzer/models`  | Vision Language 모델 다운로드/저장 |
+| `./videos`  | `/workspace/video_analyzer/videos`  | 업로드 된 영상 |
+| `./outputs` | `/workspace/video_analyzer/outputs` | 분석된 텍스트 |
 
 ### 환경 변수
 - CUDA_VISIBLE_DEVICES=0 : GPU 선택
