@@ -1,0 +1,45 @@
+services:
+  video_analyzer:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: video_analyzer:latest
+    container_name: video_analyzer
+
+    # GPU 설정
+    deploy:
+      resources:
+        limits:
+          memory: 24G
+        reservations:
+          memory: 24G
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+    ports:
+      - "7860:7860"   # Gradio UI
+
+    # 볼륨 마운트 (호스트 ↔ 컨테이너)
+    volumes:
+      - ./models:/workspace/video_analyzer/models
+      - ./videos:/workspace/video_analyzer/videos
+      - ./outputs:/workspace/video_analyzer/outputs
+      - ./scripts:/workspace/video_analyzer/scripts
+
+    environment:
+      # GPU 선택 (필요 시 GPU ID 지정)
+      - CUDA_VISIBLE_DEVICES=0
+      - HF_HOME=/workspace/video_analyzer/models
+      - TRANSFORMERS_CACHE=/workspace/video_analyzer/models
+      - HF_HUB_CACHE=/workspace/video_analyzer/models
+      - PYTHONUNBUFFERED=1
+      - TZ=Asia/Seoul
+
+    stdin_open: true
+    tty: true
+    restart: unless-stopped
+    shm_size: "24gb"
+
+    working_dir: /workspace/video_analyzer

@@ -78,41 +78,24 @@ def _parse_text(text):
     return text
 
 # ---------------------------
-# 🔧 비디오 전처리 함수 추가
+# 🔧 비디오 전처리 함수
 # ---------------------------
-def preprocess_video(video_path, fps=1.0, max_width=720, max_height=720):
-    """
-    입력 영상을 FPS 및 해상도 제한하여 임시 파일로 변환.
-    - fps: 프레임 샘플링 속도
-    - max_width, max_height: 리사이즈 최대 크기
-    """
+def preprocess_video(video_path, fps=1.5, max_width=720, max_height=720):
     try:
-        # 임시 출력 파일 생성
         tmp_dir = tempfile.gettempdir()
         out_path = os.path.join(tmp_dir, f"preproc_{os.path.basename(video_path)}")
-        
-        # FFMPEG 커맨드 구성
         cmd = [
-            "ffmpeg",
-            "-y",  # overwrite
-            "-i", video_path,
+            "ffmpeg", "-y", "-i", video_path,
             "-vf", f"fps={fps},scale='min({max_width},iw)':'min({max_height},ih)':force_original_aspect_ratio=decrease",
-            "-c:v", "libx264",
-            "-preset", "veryfast",
-            "-an",  # 오디오 제거
-            out_path
+            "-c:v", "libx264", "-preset", "veryfast", "-an", out_path
         ]
-
         subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True)
-
-        # 파일 크기 확인 (100MB 이상이면 경고)
         if os.path.getsize(out_path) > 100 * 1024 * 1024:
             print(f"⚠️ Preprocessed video too large: {os.path.getsize(out_path)/1024/1024:.1f}MB")
-
         return out_path
     except Exception as e:
         print(f"❌ Video preprocess failed: {e}")
-        return video_path  # 실패 시 원본 반환
+        return video_path
 
 def _remove_image_special(text):
     text = text.replace('<ref>', '').replace('</ref>', '')
@@ -131,13 +114,12 @@ def _gc():
         torch.cuda.empty_cache()
 
 
-def _transform_messages_safe(original_messages, system_prompt=None):
-    """
-    ✅ 수정: 비디오 해상도/FPS 최적화 + system_prompt 지원
-    """
+# ---------------------------
+# 🔧 메시지 변환 (FPS 적용)
+# ---------------------------
+def _transform_messages_safe(original_messages, system_prompt=None, fps=1.5):
     transformed_messages = []
 
-    # ✅ System prompt 추가
     if system_prompt and system_prompt.strip():
         transformed_messages.append({
             "role": "system",
@@ -148,18 +130,16 @@ def _transform_messages_safe(original_messages, system_prompt=None):
         q, a = message
         messages_chunk = []
 
-        # 질문 처리
         if isinstance(q, (tuple, list)):
             q_content = []
             for item in q:
                 if _is_video_file(item):
-                    # 🧩 비디오 전처리 추가
-                    preproc_path = preprocess_video(item, fps=1.0, max_width=720, max_height=720)
+                    preproc_path = preprocess_video(item, fps=fps)
                     q_content.append({
                         "type": "video",
                         "video": f"file://{preproc_path}",
                         "max_pixels": 400 * 400,
-                        "fps": 1.5,
+                        "fps": fps,
                         "max_frames": 120,
                         "frame_sampling": "uniform",
                     })
@@ -169,7 +149,6 @@ def _transform_messages_safe(original_messages, system_prompt=None):
         elif isinstance(q, str) and q.strip() != "":
             messages_chunk.append({"role": "user", "content": [{"type": "text", "text": q.strip()}]})
 
-        # 답변 처리
         if a:
             messages_chunk.append({"role": "assistant", "content": [{"type": "text", "text": a.strip()}]})
 
@@ -178,49 +157,28 @@ def _transform_messages_safe(original_messages, system_prompt=None):
     return transformed_messages
 
 
-def call_local_model_stream_safe(model, processor, messages, system_prompt=None, max_tokens=768):
-    """
-    ✅ 수정: system_prompt 파라미터 추가
-    """
+# ---------------------------
+# 🔧 모델 호출 (FPS 적용)
+# ---------------------------
+def call_local_model_stream_safe(model, processor, messages, system_prompt=None, max_tokens=768, fps=1.5):
     print(f"🔄 Starting generation with {len(messages)} messages...")
     if system_prompt:
         print(f"📋 System prompt: {system_prompt[:50]}...")
-    
     print(f"🎯 Max tokens: {max_tokens}")
 
     try:
-        # ✅ system_prompt 전달
-        transformed_messages = _transform_messages_safe(messages, system_prompt=system_prompt)
-        print(f"✅ Transformed to {len(transformed_messages)} messages")
-
+        transformed_messages = _transform_messages_safe(messages, system_prompt=system_prompt, fps=fps)
         text = processor.apply_chat_template(transformed_messages, tokenize=False, add_generation_prompt=True)
         image_inputs, video_inputs = process_vision_info(transformed_messages)
-        
-        print(f"📹 Videos: {len(video_inputs) if video_inputs else 0}")
-        print(f"🖼️ Images: {len(image_inputs) if image_inputs else 0}")
-        
-        inputs = processor(
-            text=[text], 
-            images=image_inputs, 
-            videos=video_inputs, 
-            padding=True, 
-            return_tensors="pt"
-        )
+
+        inputs = processor(text=[text], images=image_inputs, videos=video_inputs, padding=True, return_tensors="pt")
         inputs = inputs.to(model.device)
-
         tokenizer = processor.tokenizer
-        
-        # 타임아웃 증가: 20초 → 300초
-        streamer = TextIteratorStreamer(
-            tokenizer, 
-            timeout=300.0,
-            skip_prompt=True, 
-            skip_special_tokens=True
-        )
 
-        # 생성 파라미터 조정: "repetition_penalty": 1.1,
+        streamer = TextIteratorStreamer(tokenizer, timeout=300.0, skip_prompt=True, skip_special_tokens=True)
+
         gen_kwargs = {
-            "max_new_tokens": int(max_tokens),  # ✅ 사용자 입력값 사용
+            "max_new_tokens": int(max_tokens),
             "streamer": streamer,
             "do_sample": True,
             "temperature": 0.65,
@@ -228,49 +186,30 @@ def call_local_model_stream_safe(model, processor, messages, system_prompt=None,
             **inputs
         }
 
-        print("🚀 Starting generation thread...")
         thread = Thread(target=model.generate, kwargs=gen_kwargs)
         thread.start()
 
         generated_text = ""
         char_count = 0
-        
-        # Streaming 처리
         try:
             for new_text in streamer:
                 generated_text += new_text
                 char_count += len(new_text)
-                
                 if char_count % 50 == 0:
                     print(f"📝 Generated {char_count} chars...")
-                
                 yield _remove_image_special(_parse_text(generated_text))
-                
         except Exception as stream_error:
             print(f"⚠️ Streaming error: {stream_error}")
             thread.join(timeout=10)
-            error_msg = f"{generated_text}\n\n---\n⚠️ Generation interrupted: {str(stream_error)}"
-            yield _remove_image_special(_parse_text(error_msg))
-            return
-        
-        print(f"✅ Generation complete! Total: {len(generated_text)} chars")
+            yield _remove_image_special(_parse_text(f"{generated_text}\n\n---\n⚠️ Generation interrupted: {stream_error}"))
+
         yield _remove_image_special(_parse_text(generated_text))
-        
+
     except Exception as e:
         print(f"❌ Generation error: {e}")
         import traceback
         traceback.print_exc()
-        
-        error_msg = f"""❌ Error occurred during generation:
-
-Error: {str(e)}
-
-💡 Suggestions:
-- Try a shorter video (< 1 minute)
-- Reduce video resolution
-- Check if file exists and is accessible"""
-        
-        yield error_msg
+        yield f"❌ Error occurred: {e}\n💡 Suggestions: Shorter video, lower resolution, check file path."
 
 
 def add_text_safe(history, task_history, text):
@@ -354,7 +293,15 @@ Remember: Your role is purely observational and descriptive. Provide factual, de
                 step=128,
                 label="Max Output Tokens",
                 info="Maximum length of generated response..."
-            )        
+            )
+            fps_slider = gr.Slider(
+                minimum=0.5,
+                maximum=5.0,
+                value=1.5,
+                step=0.1,
+                label="Video FPS",
+                info="Adjust the frames per second for video processing. Lower FPS reduces VRAM usage."
+            )
         query = gr.Textbox(
             lines=2, 
             label='프롬프트',
@@ -370,18 +317,15 @@ Remember: Your role is purely observational and descriptive. Provide factual, de
             submit_btn = gr.Button('🚀 영상 분석', variant="primary")
             regen_btn = gr.Button('🤔️ 재시도')
             empty_bin = gr.Button('🧹 내용 지우기')
-
-        # ✅ 변경: predict_wrapper에 max_tokens 추가
-        def predict_wrapper(chat, hist, sys_prompt, max_tok):
-            """
-            Wrapper with system_prompt support
-            """
+            
+        # ---------------------------
+        # 🔧 Gradio Wrapper
+        # ---------------------------
+        def predict_wrapper(chat, hist, sys_prompt, max_tok, fps_value):
             if not hist:
                 yield chat
                 return
-            
-            # ✅ system_prompt와 max_tokens 전달
-            for response_text in call_local_model_stream_safe(model, processor, hist, sys_prompt, max_tok):
+            for response_text in call_local_model_stream_safe(model, processor, messages=hist, system_prompt=sys_prompt, max_tokens=max_tok, fps=fps_value):
                 if chat:
                     chat[-1][1] = response_text
                     yield chat
@@ -392,8 +336,8 @@ Remember: Your role is purely observational and descriptive. Provide factual, de
             [chatbot, task_history, query]
         ).then(
             predict_wrapper,
-            [chatbot, task_history, system_prompt, max_tokens_slider],  # ✅ max_tokens_slider 추가
-            [chatbot], 
+            [chatbot, task_history, system_prompt, max_tokens_slider, fps_slider],  # fps_slider 추가
+            [chatbot],
             show_progress=True
         )
         
