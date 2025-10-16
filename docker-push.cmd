@@ -1,0 +1,1 @@
+docker push aicompanion/video_analyzer:latest
