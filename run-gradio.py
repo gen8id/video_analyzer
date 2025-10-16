@@ -39,11 +39,11 @@ def _get_args():
 
 def _load_model_processor(args):
 
-    # device_map = "auto"
+    device_map = "auto"
     # device_map = {"": "cuda:0"} 
     # device_map = {"": 1}  # GPU 1번으로 통째로 올림
-    device_map = "balanced"
-    offload_folder = "./offload"
+    # device_map = "balanced"
+    # offload_folder = "./offload"
 
     if args.flash_attn2:
         model = Qwen2VLForConditionalGeneration.from_pretrained(
@@ -61,6 +61,15 @@ def _load_model_processor(args):
         )
 
     processor = AutoProcessor.from_pretrained(args.checkpoint_path)
+
+    # 간단하게 사용된 디바이스만 확인
+    devices_used = set(model.hf_device_map.values())
+    print(f"\n📍 Used devices: {devices_used}")
+
+    # GPU 번호만 추출
+    gpu_ids = [int(d) for d in devices_used if isinstance(d, int)]
+    print(f"🎮 GPU IDs: {gpu_ids}")
+
     return model, processor
 
 

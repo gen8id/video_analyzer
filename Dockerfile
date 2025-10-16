@@ -33,4 +33,4 @@ ENV HF_HUB_CACHE=/workspace/video_analyzer/models
 
 EXPOSE 7860
 
-ENTRYPOINT ["python", "run-gradio.py", "--share"] 
+# ENTRYPOINT ["python", "run-gradio.py"] 
