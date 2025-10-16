@@ -192,7 +192,7 @@ def call_local_model_stream_safe(model, processor, messages, system_prompt=None,
             break
     if video_filename is None:
         video_filename = "output"
-    txt_path = os.path.join(OUTPUT_DIR, f"{os.path.splitext(video_filename)[0]}.txt")
+    txt_path = OUTPUT_DIR / f"{Path(video_filename).stem}_{uuid.uuid4().hex[:4]}.txt"
 
     try:
         # 메시지 변환 및 전처리
