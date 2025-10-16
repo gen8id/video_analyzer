@@ -60,7 +60,6 @@ docker-run.cmd
 
 ## 5. 컨테이너 중지
 ```
-# 중지
 docker-stop.cmd
 ```
 
