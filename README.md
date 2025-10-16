@@ -19,15 +19,21 @@
 
 ```bash
 video-analyzer/
-├─ docker-compose.yml
-├─ Dockerfile
+├─ .gitignore
 ├─ requirements.txt
 ├─ run-gradio.py
 │─ qwen-vl-utils/
 │─ web_demo_streaming/
+├─ docker-compose.yml # 도커 컴포즈 설정
+├─ Dockerfile # 도커 설정
+├─ docker-build.cmd # 최초 컨테이너 이미지 빌드
+├─ docker-run.cmd # 컨테이너 이미지 실행
+├─ docker-stop.cmd # 컨테이너 이미지 실행 종료
+├─ tail-logs.cmd # 컨테이너 로그 확인
 ├─ models/ # 모델 캐시 및 다운로드 폴더
 ├─ videos/ # 업로드할 비디오 저장 폴더
-└─ outputs/ # 분석 결과 텍스트 저장 폴더
+├─ outputs/ # 분석 결과 텍스트 저장 폴더
+└─ README.md # 애플리케이션 설치 안내
 
 > `models`, `videos`, `outputs` 폴더는 호스트와 컨테이너 간 볼륨으로 자동 마운트됩니다.
 
@@ -53,7 +59,7 @@ docker-run.cmd
 - 필요 시 docker-compose.yml에서 GRADIO_SHARE=1 환경변수로 외부 공유 가능
 
 ## 5. 컨테이너 중지
-```cmd
+```
 # 중지
 docker-stop.cmd
 ```
