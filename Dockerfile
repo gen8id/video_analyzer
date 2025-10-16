@@ -23,7 +23,6 @@ COPY web_demo_streaming ./web_demo_streaming
 RUN mkdir -p /workspace/video_analyzer/models /workspace/video_analyzer/videos /workspace/video_analyzer/outputs
 
 ENV HF_HOME=/workspace/video_analyzer/models
-# ENV TRANSFORMERS_CACHE=/workspace/video_analyzer/models
 ENV HF_HUB_CACHE=/workspace/video_analyzer/models
 
 EXPOSE 7860

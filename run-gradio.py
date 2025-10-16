@@ -15,9 +15,9 @@ from transformers import AutoProcessor, Qwen2VLForConditionalGeneration, TextIte
 
 DEFAULT_CKPT_PATH = 'Qwen/Qwen2-VL-7B-Instruct'
 MODEL_DIR = Path("/workspace/video_analyzer/models/Qwen2-VL-7B-Instruct")
-UPLOAD_DIR = Path("./videos")
+UPLOAD_DIR = Path("/workspace/video_analyzer/videos")
 UPLOAD_DIR.mkdir(exist_ok=True, parents=True)
-OUTPUT_DIR = "outputs"
+OUTPUT_DIR = "/workspace/video_analyzer/outputs"
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 def _get_args():
@@ -196,7 +196,7 @@ def call_local_model_stream_safe(model, processor, messages, system_prompt=None,
 
     try:
         # 메시지 변환 및 전처리
-        transformed_messages = _transform_messages_safe(messages, system_prompt=system_prompt, fps_slider=fps)
+        transformed_messages = _transform_messages_safe(messages, system_prompt=system_prompt, fps=fps)
         text = processor.apply_chat_template(transformed_messages, tokenize=False, add_generation_prompt=True)
         image_inputs, video_inputs = process_vision_info(transformed_messages)
 
@@ -379,7 +379,7 @@ Remember: Your role is purely observational and descriptive. Provide factual, de
             [chatbot, task_history, query]
         ).then(
             predict_wrapper,
-            [chatbot, task_history, system_prompt, max_tokens_slider, fps_slider],  # fps_slider 추가
+            [chatbot, task_history, system_prompt, max_tokens_slider, fps_slider.value],  # fps_slider 추가
             [chatbot],
             show_progress=True
         )
