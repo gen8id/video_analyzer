@@ -1,0 +1,1 @@
+docker pull aicompanion/video_analyzer:latest
