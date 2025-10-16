@@ -14,11 +14,11 @@ from qwen_vl_utils import process_vision_info
 from transformers import AutoProcessor, Qwen2VLForConditionalGeneration, TextIteratorStreamer
 
 DEFAULT_CKPT_PATH = 'Qwen/Qwen2-VL-7B-Instruct'
-MODEL_DIR = Path("/workspace/video_analyzer/models/Qwen2-VL-7B-Instruct")
-UPLOAD_DIR = Path("/workspace/video_analyzer/videos")
+MODEL_DIR = Path("./models/Qwen2-VL-7B-Instruct")
+UPLOAD_DIR = Path("./videos")
 UPLOAD_DIR.mkdir(exist_ok=True, parents=True)
-OUTPUT_DIR = "/workspace/video_analyzer/outputs"
-os.makedirs(OUTPUT_DIR, exist_ok=True)
+OUTPUT_DIR = Path("./outputs")
+OUTPUT_DIR.mkdir(exist_ok=True, parents=True)
 
 def _get_args():
     parser = ArgumentParser()
@@ -90,22 +90,52 @@ def _parse_text(text):
 # ---------------------------
 # 🔧 비디오 전처리 함수
 # ---------------------------
-def preprocess_video(video_path, fps=1.5, max_width=720, max_height=720):
+def preprocess_video(video_path, fps=1.5, max_width=720, max_height=720, timeout=30):
     try:
-        tmp_dir = tempfile.gettempdir()
-        out_path = os.path.join(tmp_dir, f"preproc_{os.path.basename(video_path)}")
+        # 원본과 같은 폴더에 저장
+        video_dir = os.path.dirname(video_path)
+        basename = os.path.basename(video_path)
+        name, ext = os.path.splitext(basename)
+        out_path = os.path.join(video_dir, f"{name}_preprocessed{ext}")
+
+
         cmd = [
-            "ffmpeg", "-y", "-i", video_path,
-            "-vf", f"fps={fps},scale='min({max_width},iw)':'min({max_height},ih)':force_original_aspect_ratio=decrease",
-            "-c:v", "libx264", "-preset", "veryfast", "-an", out_path
+            "ffmpeg", "-y", "-i", str(video_path),
+            "-vf", f"fps={fps},scale={max_width}:-2",
+            "-c:v", "libx264", "-preset", "veryfast", "-an", 
+            out_path
         ]
-        subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True)
-        if os.path.getsize(out_path) > 100 * 1024 * 1024:
-            print(f"⚠️ Preprocessed video too large: {os.path.getsize(out_path)/1024/1024:.1f}MB")
+
+        print("🎬 Preprocessing video with ffmpeg...")
+
+        # ✅ timeout 추가만으로도 대부분 해결
+        result = subprocess.run(
+            cmd, 
+            stdout=subprocess.PIPE, 
+            stderr=subprocess.PIPE,
+            timeout=timeout,  # 30초 제한
+            check=True
+        )
+        
+        print("✅ Video preprocessing completed!")
+
+        file_size = os.path.getsize(out_path) / 1024 / 1024
+        print(f"✅ Saved to: {out_path} ({file_size:.1f}MB)")
+        
         return out_path
-    except Exception as e:
-        print(f"❌ Video preprocess failed: {e}")
+        
+    except subprocess.TimeoutExpired:
+        print(f"⏱️ FFmpeg timeout after {timeout}s")
         return video_path
+        
+    except subprocess.CalledProcessError as e:
+        print(f"❌ FFmpeg error:\n{e.stderr.decode('utf-8', errors='ignore')}")
+        return video_path
+        
+    except KeyboardInterrupt:
+        print("\n🛑 Interrupted - cleaning up...")
+        raise
+
 
 def _remove_image_special(text):
     text = text.replace('<ref>', '').replace('</ref>', '')
