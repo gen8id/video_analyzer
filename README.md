@@ -27,8 +27,10 @@ video-analyzer/
 ├─ docker-compose.yml # 도커 컴포즈 설정 파일
 ├─ Dockerfile # 도커 설정 파일
 ├─ docker-build.cmd # 1) 빌드해서 실행: 로컬에서 컨테이너 이미지 빌드
-├─ docker-run.cmd  # 컨테이너 이미지 실행
-├─ docker-stop.cmd # 컨테이너 이미지 실행 종료
+├─ docker-up.cmd # 컨테이너 이미지 실행
+├─ docker-start.cmd # 중단된 컨테이너 다시 시작
+├─ docker-stop.cmd # 컨테이너 서비스 일시 중지
+├─ docker-down.cmd # 서비스 컨테이너를 완전히 제거
 ├─ docker-pull.cmd # 2) 빌드안하고 Pull 받아서 실행: kmong 개발자 개인 docker hub 저장소에서 받아서 하시고 싶은 경우
 ├─ docker-push.cmd # 3) 현재 버전의 도커 이미지를 개인 저장소에 push해서 저장하고 싶은 경우, 파일 내 경로 수정하여 사용
 ├─ tail-logs.cmd # 컨테이너 이미지내 로그 확인
