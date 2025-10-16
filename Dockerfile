@@ -27,4 +27,4 @@ ENV HF_HUB_CACHE=/workspace/models
 
 EXPOSE 7860
 
-# ENTRYPOINT ["python", "run-gradio.py"]
+ENTRYPOINT ["python", "run-gradio.py", "--share"] 
