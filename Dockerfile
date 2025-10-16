@@ -3,9 +3,12 @@ FROM pytorch/pytorch:2.4.0-cuda11.8-cudnn9-devel
 
 WORKDIR /workspace/video_analyzer
 
-RUN apt-get update && apt-get install -y \
-    git ffmpeg libsm6 libxext6 wget curl vim && \
-    rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y wget && \
+    wget -O /usr/local/bin/ffmpeg https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-amd64-static.tar.xz && \
+    tar -xJf ffmpeg-release-amd64-static.tar.xz && \
+    cp ffmpeg-*/ffmpeg ffmpeg-*/ffprobe /usr/local/bin/ && \
+    chmod +x /usr/local/bin/ffmpeg /usr/local/bin/ffprobe && \
+    rm -rf ffmpeg-*
 
 COPY requirements.txt .
 
