@@ -8,8 +8,8 @@ RUN apt-get update && apt-get install -y wget xz-utils && \
     wget https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-amd64-static.tar.xz && \
     tar -xJf ffmpeg-release-amd64-static.tar.xz && \
     cd ffmpeg-*-amd64-static && \
-    mv ffmpeg ffprobe /usr/local/bin/ && \
-    chmod +x /usr/local/bin/ffmpeg /usr/local/bin/ffprobe && \
+    mv ffmpeg ffprobe /opt/conda/bin/ && \
+    chmod +x /opt/conda/bin/ffmpeg /opt/conda/bin/ffprobe && \
     cd / && rm -rf /tmp/*
 
 COPY requirements.txt .
