@@ -8,4 +8,7 @@ wheels/
 
 # venv
 .venv
+venv/
 models/
+outputs/
+videos/

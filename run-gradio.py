@@ -92,12 +92,12 @@ def _parse_text(text):
 # ---------------------------
 def preprocess_video(video_path, fps=1.5, max_width=720, max_height=720, timeout=30):
     try:
-        # 원본과 같은 폴더에 저장
+        # ✅ 절대 경로로 변환
+        video_path = os.path.abspath(video_path)
         video_dir = os.path.dirname(video_path)
         basename = os.path.basename(video_path)
         name, ext = os.path.splitext(basename)
-        out_path = os.path.join(video_dir, f"{name}_preprocessed{ext}")
-
+        out_path = os.path.abspath(os.path.join(video_dir, f"{name}_preprocessed{ext}"))
 
         cmd = [
             "ffmpeg", "-y", "-i", str(video_path),
@@ -106,31 +106,30 @@ def preprocess_video(video_path, fps=1.5, max_width=720, max_height=720, timeout
             out_path
         ]
 
-        print("🎬 Preprocessing video with ffmpeg...")
+        print(f"🎬 Preprocessing video: {basename}")
+        print(f"   Input: {video_path}")
+        print(f"   Output: {out_path}")
 
-        # ✅ timeout 추가만으로도 대부분 해결
         result = subprocess.run(
             cmd, 
             stdout=subprocess.PIPE, 
             stderr=subprocess.PIPE,
-            timeout=timeout,  # 30초 제한
+            timeout=timeout,
             check=True
         )
         
-        print("✅ Video preprocessing completed!")
-
         file_size = os.path.getsize(out_path) / 1024 / 1024
-        print(f"✅ Saved to: {out_path} ({file_size:.1f}MB)")
+        print(f"✅ Preprocessing completed: {file_size:.1f}MB")
 
         return out_path
         
     except subprocess.TimeoutExpired:
         print(f"⏱️ FFmpeg timeout after {timeout}s")
-        return video_path
+        return os.path.abspath(video_path)
         
     except subprocess.CalledProcessError as e:
         print(f"❌ FFmpeg error:\n{e.stderr.decode('utf-8', errors='ignore')}")
-        return video_path
+        return os.path.abspath(video_path)
         
     except KeyboardInterrupt:
         print("\n🛑 Interrupted - cleaning up...")
@@ -175,9 +174,11 @@ def _transform_messages_safe(original_messages, system_prompt=None, fps=1.5):
             for item in q:
                 if _is_video_file(item):
                     preproc_path = preprocess_video(item, fps=fps)
+                    video_url = f"file://{preproc_path}"
+                    print(f"📹 Video URL: {video_url}")  # ✅ 디버깅 로그
                     q_content.append({
                         "type": "video",
-                        "video": f"file://{preproc_path}",
+                        "video": video_url,
                         "max_pixels": 400 * 400,
                         "fps": fps,
                         "max_frames": 120,
