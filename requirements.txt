@@ -2,8 +2,6 @@
 gradio==3.50.0
 gradio-client==0.6.1
 qwen-vl-utils==0.0.2
-#git+https://github.com/huggingface/transformers.git@main
-#transformers==4.47.1
 transformers==4.48.3
 transformers-stream-generator==0.0.4
 torch==2.4.0
