@@ -15,6 +15,8 @@ from transformers import AutoProcessor, Qwen2VLForConditionalGeneration, TextIte
 DEFAULT_CKPT_PATH = 'Qwen/Qwen2-VL-7B-Instruct'
 UPLOAD_DIR = Path("./videos")
 UPLOAD_DIR.mkdir(exist_ok=True, parents=True)
+OUTPUT_DIR = "outputs"
+os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 def _get_args():
     parser = ArgumentParser()
@@ -164,13 +166,32 @@ def _transform_messages_safe(original_messages, system_prompt=None, fps=1.5):
 # 🔧 모델 호출 (FPS 적용)
 # ---------------------------
 def call_local_model_stream_safe(model, processor, messages, system_prompt=None, max_tokens=768, fps=1.5):
+    """
+    기존 스트리밍 생성 함수 + 분석 결과를 outputs/영상파일명.txt에 저장
+    """
     print(f"🔄 Starting generation with {len(messages)} messages...")
     if system_prompt:
         print(f"📋 System prompt: {system_prompt[:50]}...")
     print(f"🎯 Max tokens: {max_tokens}")
 
+    # 분석 텍스트를 저장할 파일명 결정
+    video_filename = None
+    for message in messages:
+        q, _ = message
+        if isinstance(q, (list, tuple)):
+            for item in q:
+                if isinstance(item, str) and item.lower().endswith(('.mp4', '.mov', '.avi', '.mkv')):
+                    video_filename = os.path.basename(item)
+                    break
+        if video_filename:
+            break
+    if video_filename is None:
+        video_filename = "output"
+    txt_path = os.path.join(OUTPUT_DIR, f"{os.path.splitext(video_filename)[0]}.txt")
+
     try:
-        transformed_messages = _transform_messages_safe(messages, system_prompt=system_prompt, fps=fps)
+        # 메시지 변환 및 전처리
+        transformed_messages = _transform_messages_safe(messages, system_prompt=system_prompt, fps_slider=fps)
         text = processor.apply_chat_template(transformed_messages, tokenize=False, add_generation_prompt=True)
         image_inputs, video_inputs = process_vision_info(transformed_messages)
 
@@ -200,12 +221,19 @@ def call_local_model_stream_safe(model, processor, messages, system_prompt=None,
                 char_count += len(new_text)
                 if char_count % 50 == 0:
                     print(f"📝 Generated {char_count} chars...")
+                # 스트리밍 출력
                 yield _remove_image_special(_parse_text(generated_text))
         except Exception as stream_error:
             print(f"⚠️ Streaming error: {stream_error}")
             thread.join(timeout=10)
             yield _remove_image_special(_parse_text(f"{generated_text}\n\n---\n⚠️ Generation interrupted: {stream_error}"))
 
+        # 최종 텍스트 파일 저장
+        with open(txt_path, "w", encoding="utf-8") as f:
+            f.write(generated_text)
+        print(f"✅ Analysis text saved: {txt_path}")
+
+        # 최종 스트리밍 출력
         yield _remove_image_special(_parse_text(generated_text))
 
     except Exception as e:

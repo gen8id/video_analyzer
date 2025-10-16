@@ -20,7 +20,7 @@ RUN pip install --upgrade pip setuptools wheel && \
 RUN pip install flash-attn==2.6.1 || echo "Flash-attn 설치 실패해도 무시"
 
 # 프로젝트 소스 복사
-COPY scripts/ ./scripts/
+# COPY scripts/ ./scripts/
 
 # 모델 다운로드 디렉토리 생성
 RUN mkdir -p models videos outputs
@@ -34,4 +34,4 @@ ENV HF_HUB_CACHE=/workspace/models
 EXPOSE 7860
 
 # Start-up 스크립트 실행
-ENTRYPOINT ["python", "scripts/start-model.py"]
+ENTRYPOINT ["python", "start-model.py"]

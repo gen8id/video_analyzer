@@ -26,7 +26,6 @@ services:
       - ./models:/workspace/video_analyzer/models
       - ./videos:/workspace/video_analyzer/videos
       - ./outputs:/workspace/video_analyzer/outputs
-      - ./scripts:/workspace/video_analyzer/scripts
 
     environment:
       # GPU 선택 (필요 시 GPU ID 지정)
@@ -45,4 +44,4 @@ services:
 
     working_dir: /workspace/video_analyzer
 
-    command: ["python", "scripts/run-gradio.py", "--share"] 
+    command: ["python", "run-gradio.py", "--share"] 
