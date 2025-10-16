@@ -8,12 +8,12 @@ import tempfile
 import os
 import gradio as gr
 import torch
+import uuid
 from pathlib import Path
 from qwen_vl_utils import process_vision_info
 from transformers import AutoProcessor, Qwen2VLForConditionalGeneration, TextIteratorStreamer
 
 DEFAULT_CKPT_PATH = 'Qwen/Qwen2-VL-7B-Instruct'
-# MODEL_NAME = "Qwen/Qwen2-VL-7B-Instruct"
 MODEL_DIR = Path("/workspace/video_analyzer/models/Qwen2-VL-7B-Instruct")
 UPLOAD_DIR = Path("./videos")
 UPLOAD_DIR.mkdir(exist_ok=True, parents=True)
@@ -267,7 +267,10 @@ def add_file_safe(history, task_history, file):
     task_history = task_history if task_history is not None else []
 
     # Gradio에서 받은 임시 파일을 지정 폴더로 이동
-    dest_path = UPLOAD_DIR / file.name
+    filename = Path(file.name).stem  # 확장자 제외한 파일명
+    ext = Path(file.name).suffix     # .mp4 등 확장자
+    dest_path = UPLOAD_DIR / f"{filename}_{uuid.uuid4().hex}{ext}"
+
     shutil.copy(file.name, dest_path)
     print(f"📁 File saved to: {dest_path}")
 
