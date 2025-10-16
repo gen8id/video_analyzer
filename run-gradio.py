@@ -13,6 +13,8 @@ from qwen_vl_utils import process_vision_info
 from transformers import AutoProcessor, Qwen2VLForConditionalGeneration, TextIteratorStreamer
 
 DEFAULT_CKPT_PATH = 'Qwen/Qwen2-VL-7B-Instruct'
+# MODEL_NAME = "Qwen/Qwen2-VL-7B-Instruct"
+MODEL_DIR = Path("/workspace/video_analyzer/models/Qwen2-VL-7B-Instruct")
 UPLOAD_DIR = Path("./videos")
 UPLOAD_DIR.mkdir(exist_ok=True, parents=True)
 OUTPUT_DIR = "outputs"
@@ -38,13 +40,16 @@ def _load_model_processor(args):
     if args.flash_attn2:
         model = Qwen2VLForConditionalGeneration.from_pretrained(
             args.checkpoint_path,
+            cache_dir=str(MODEL_DIR),
             torch_dtype='auto',
             attn_implementation='flash_attention_2',
             device_map=device_map
         )
     else:
         model = Qwen2VLForConditionalGeneration.from_pretrained(
-            args.checkpoint_path, device_map=device_map
+            args.checkpoint_path, 
+            device_map=device_map,
+            cache_dir=str(MODEL_DIR)
         )
 
     processor = AutoProcessor.from_pretrained(args.checkpoint_path)
