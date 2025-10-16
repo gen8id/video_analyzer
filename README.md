@@ -24,12 +24,14 @@ video-analyzer/
 ├─ run-gradio.py
 │─ qwen-vl-utils/
 │─ web_demo_streaming/
-├─ docker-compose.yml # 도커 컴포즈 설정
-├─ Dockerfile # 도커 설정
-├─ docker-build.cmd # 최초 컨테이너 이미지 빌드
-├─ docker-run.cmd # 컨테이너 이미지 실행
+├─ docker-compose.yml # 도커 컴포즈 설정 파일
+├─ Dockerfile # 도커 설정 파일
+├─ docker-build.cmd # 1) 빌드해서 실행: 로컬에서 컨테이너 이미지 빌드
+├─ docker-run.cmd  # 컨테이너 이미지 실행
 ├─ docker-stop.cmd # 컨테이너 이미지 실행 종료
-├─ tail-logs.cmd # 컨테이너 로그 확인
+├─ docker-pull.cmd # 2) 빌드안하고 Pull 받아서 실행: kmong 개발자 개인 docker hub 저장소에서 받아서 하시고 싶은 경우
+├─ docker-push.cmd # 3) 현재 버전의 도커 이미지를 개인 저장소에 push해서 저장하고 싶은 경우, 파일 내 경로 수정하여 사용
+├─ tail-logs.cmd # 컨테이너 이미지내 로그 확인
 ├─ models/ # 모델 캐시 및 다운로드 폴더
 ├─ videos/ # 업로드할 비디오 저장 폴더
 ├─ outputs/ # 분석 결과 텍스트 저장 폴더
