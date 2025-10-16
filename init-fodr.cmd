@@ -1,1 +1,0 @@
-mkdir videos outputs models scripts

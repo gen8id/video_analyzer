@@ -3,15 +3,18 @@ import re
 from argparse import ArgumentParser
 from threading import Thread
 import subprocess
+import shutil
 import tempfile
 import os
 import gradio as gr
 import torch
+from pathlib import Path
 from qwen_vl_utils import process_vision_info
 from transformers import AutoProcessor, Qwen2VLForConditionalGeneration, TextIteratorStreamer
 
 DEFAULT_CKPT_PATH = 'Qwen/Qwen2-VL-7B-Instruct'
-
+UPLOAD_DIR = Path("./videos")
+UPLOAD_DIR.mkdir(exist_ok=True, parents=True)
 
 def _get_args():
     parser = ArgumentParser()
@@ -230,12 +233,16 @@ def add_file_safe(history, task_history, file):
     history = history if history is not None else []
     task_history = task_history if task_history is not None else []
 
-    filename = file.name
-    print(f"📁 File uploaded: {filename}")
-    
-    # ✅ 리스트로 변경 (튜플 이중 감싸기 제거)
-    history.append([(filename,), None])
-    task_history.append([(filename,), None])
+    # Gradio에서 받은 임시 파일을 지정 폴더로 이동
+    dest_path = UPLOAD_DIR / file.name
+    shutil.copy(file.name, dest_path)
+    print(f"📁 File saved to: {dest_path}")
+
+    # history/task_history에 기록
+    history.append([(str(dest_path),), None])
+    task_history.append([(str(dest_path),), None])
+
+    return history, task_history
     
     return history, task_history
 

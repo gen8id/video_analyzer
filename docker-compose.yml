@@ -31,6 +31,7 @@ services:
     environment:
       # GPU 선택 (필요 시 GPU ID 지정)
       - CUDA_VISIBLE_DEVICES=0
+      - GRADIO_SHARE=1     # 필요 시 환경변수 기반 옵션도 사용 가능      
       - HF_HOME=/workspace/video_analyzer/models
       - TRANSFORMERS_CACHE=/workspace/video_analyzer/models
       - HF_HUB_CACHE=/workspace/video_analyzer/models
@@ -43,3 +44,5 @@ services:
     shm_size: "24gb"
 
     working_dir: /workspace/video_analyzer
+
+    command: ["python", "scripts/run-gradio.py", "--share"] 
