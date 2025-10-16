@@ -1,4 +1,4 @@
-# AI Video Content Analyzer
+# 🎥 AI Video Content Analyzer
 
 # AI Video Analyzer 설치 및 실행 매뉴얼
 
