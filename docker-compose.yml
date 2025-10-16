@@ -3,16 +3,13 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: video_analyzer:latest
+    image: aicompanion/video_analyzer:latest
     container_name: video_analyzer
 
     # GPU 설정
     deploy:
       resources:
-        limits:
-          memory: 24G
         reservations:
-          memory: 24G
           devices:
             - driver: nvidia
               count: all
@@ -32,10 +29,13 @@ services:
       - CUDA_VISIBLE_DEVICES=0
       - GRADIO_SHARE=1     # 필요 시 환경변수 기반 옵션도 사용 가능      
       - HF_HOME=/workspace/video_analyzer/models
-      # - TRANSFORMERS_CACHE=/workspace/video_analyzer/models
       - HF_HUB_CACHE=/workspace/video_analyzer/models
       - PYTHONUNBUFFERED=1
       - TZ=Asia/Seoul
+      - OMP_NUM_THREADS=8
+      - MKL_NUM_THREADS=8
+      - TMPDIR=/dev/shm
+      # - HF_HOME=/root/.cache/huggingface
 
     stdin_open: true
     tty: true
@@ -43,5 +43,3 @@ services:
     shm_size: "24gb"
 
     working_dir: /workspace/video_analyzer
-
-    # command: ["python", "run-gradio.py", "--share"] 

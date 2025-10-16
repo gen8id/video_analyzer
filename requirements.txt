@@ -1,5 +1,5 @@
-# PyTorch + torchvision CUDA 12.4
--f https://download.pytorch.org/whl/cu124/torch_stable.html
+# PyTorch + torchvision CUDA 12.1
+-f https://download.pytorch.org/whl/cu121/torch_stable.html
 torch==2.4.0
 torchvision==0.19.0
 

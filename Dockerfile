@@ -1,5 +1,6 @@
 # Base image — 최신 PyTorch + CUDA + cuDNN 포함 버전
-FROM pytorch/pytorch:2.4.0-cuda11.8-cudnn9-devel
+# FROM pytorch/pytorch:2.4.0-cuda11.8-cudnn9-devel
+FROM pytorch/pytorch:2.4.0-cuda12.1-cudnn9-devel
 
 WORKDIR /workspace/video_analyzer
 
