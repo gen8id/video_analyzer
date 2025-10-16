@@ -22,11 +22,9 @@ video-analyzer/
 ├─ docker-compose.yml
 ├─ Dockerfile
 ├─ requirements.txt
-├─ scripts/
-│ ├─ start-model.py
-│ ├─ run-gradio.py
-│ ├─ qwen-vl-utils/
-│ └─ web_demo_streaming/
+├─ run-gradio.py
+│─ qwen-vl-utils/
+│─ web_demo_streaming/
 ├─ models/ # 모델 캐시 및 다운로드 폴더
 ├─ videos/ # 업로드할 비디오 저장 폴더
 └─ outputs/ # 분석 결과 텍스트 저장 폴더
