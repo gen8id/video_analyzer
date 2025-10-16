@@ -4,7 +4,7 @@ from pathlib import Path
 from transformers import AutoProcessor, Qwen2VLForConditionalGeneration
 
 MODEL_NAME = "Qwen/Qwen2-VL-7B-Instruct"
-MODEL_DIR = Path("/workspace/models/Qwen2-VL-7B-Instruct")
+MODEL_DIR = Path("/workspace/video_analyzer/models/Qwen2-VL-7B-Instruct")
 
 if not MODEL_DIR.exists():
     print(f"📥 Downloading {MODEL_NAME}...")
