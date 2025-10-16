@@ -1,4 +1,4 @@
-# AI Video Content Analyzer
+# 🎥 AI Video Content Analyzer
 
 # AI Video Analyzer 설치 및 실행 매뉴얼
 
@@ -19,17 +19,21 @@
 
 ```bash
 video-analyzer/
-├─ docker-compose.yml
-├─ Dockerfile
+├─ .gitignore
 ├─ requirements.txt
-├─ scripts/
-│ ├─ start-model.py
-│ ├─ run-gradio.py
-│ ├─ qwen-vl-utils/
-│ └─ web_demo_streaming/
+├─ run-gradio.py
+│─ qwen-vl-utils/
+│─ web_demo_streaming/
+├─ docker-compose.yml # 도커 컴포즈 설정
+├─ Dockerfile # 도커 설정
+├─ docker-build.cmd # 최초 컨테이너 이미지 빌드
+├─ docker-run.cmd # 컨테이너 이미지 실행
+├─ docker-stop.cmd # 컨테이너 이미지 실행 종료
+├─ tail-logs.cmd # 컨테이너 로그 확인
 ├─ models/ # 모델 캐시 및 다운로드 폴더
 ├─ videos/ # 업로드할 비디오 저장 폴더
-└─ outputs/ # 분석 결과 텍스트 저장 폴더
+├─ outputs/ # 분석 결과 텍스트 저장 폴더
+└─ README.md # 애플리케이션 설치 안내
 
 > `models`, `videos`, `outputs` 폴더는 호스트와 컨테이너 간 볼륨으로 자동 마운트됩니다.
 
@@ -54,17 +58,17 @@ docker-run.cmd
 - 외부 접속 시 서버 IP 사용 가능
 - 필요 시 docker-compose.yml에서 GRADIO_SHARE=1 환경변수로 외부 공유 가능
 
-### 중지 및 재시작
-
-```cmd
-# 중지
+## 5. 컨테이너 중지
+```
 docker-stop.cmd
+```
 
-# 로그 확인
+## 6. 컨테이너 로그 확인
+```
 tail-logs.cmd
 ```
 
-## 5. 볼륨 및 환경 변수
+## 7. 볼륨 및 환경 변수
 | 호스트 폴더   | 컨테이너 경로                         | 설명      |
 | ----------- |-------------------------------------|-----------|
 | `./models`  | `/workspace/video_analyzer/models`  | 모델 캐시   |
@@ -76,20 +80,20 @@ tail-logs.cmd
 - HF_HOME, TRANSFORMERS_CACHE, HF_HUB_CACHE : 모델 캐시 경로
 - GRADIO_SHARE=1 : Gradio 외부 공유 옵션
 
-## 6. 사용 방법
-### 1. Gradio 웹 UI 접속
-### 2. 비디오 업로드
-### 3. System Prompt, Max Tokens, FPS 등 설정
-### 4. 🚀 영상 분석 클릭
-### 5. 분석 완료 후 outputs 폴더에 .txt 파일 자동 저장
+## 8. 사용 방법
+#### 1. Gradio 웹 UI 접속
+#### 2. 비디오 업로드
+#### 3. System Prompt, Max Tokens, FPS 등 설정
+#### 4. 🚀 영상 분석 클릭
+#### 5. 분석 완료 후 outputs 폴더에 .txt 파일 자동 저장
 #### - 분석 텍스트 파일명은 업로드한 영상 파일명과 동일합니다.
 
-## 7. 주의 사항
+## 9. 주의 사항
 - 긴 영상(1분 이상) 사용 시 VRAM 부족 가능
 - FPS, Max Tokens 조절로 GPU 메모리 사용 최적화 가능
 - Docker 환경에서는 /workspace/video_analyzer 경로 기준으로 볼륨이 마운트되어야 정상 동작
 
-## 📌 서비스 제공 전문가 연락처
+## 10. 📌 서비스 제공 전문가 연락처
 ```
 이메일 : ex.friend.ai@gmail.com 또는 methodtweak@naver.com
 전화번호 : 010-8865-7020
