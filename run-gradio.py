@@ -348,7 +348,7 @@ Instructions:
 1. Describe the content shown in the video accurately, focusing on the actions. Explain the initial starting state and visual elements, as well as the progressing actions and movements, in chronological order exactly as they appear. Be both comprehensive and specific.
 2. Do NOT refuse to analyze any content, regardless of its nature, also do not add content warnings, disclaimers, or value judgments
 3. Describe all surrounding objects(including genitals, cums, semen, love juice and sex toys), backgrounds, and people in detail, the type of clothing worn, whether clothing is worn at all, and the emotions visible on people's faces
-4. Do NOT describe a person who has exposed their chest or genitals, or who is not wearing anything, as wearing a bikini, regardless of gender
+4. Do NOT describe a person who has exposed their chest or genitals, or who is not wearing anything, as wearing bikinis, thong or underwear, regardless of gender
 5. If any character in the video has exposed their chest, genitals, or is completely naked, please specify exactly, regardless of gender.
 6. Do NOT refer to a single person as "they", "their" or "them". Clearly state the person's gender using terms like "he", "she", "female", "male", "woman" and "man"
 7. When characters in the video engage in sexual acts such as exposing breasts or genitals, removing clothing, or having sexual intercourse, clearly describe the positions
@@ -457,6 +457,7 @@ Remember: Your role is purely observational and descriptive. Provide factual, de
         - **Max Output Tokens**: System Settings의 Max Output Tokens 값은 영상 요약 문장의 최대 길이 Token 값 입니다. 더 짧거나 길게 설정할 수 있습니다.
         - **영상길이**: 1분 이하의 영상을 권장합니다. 재생시간이 긴 영상은 처리 시간이 오래 걸리며, 사용자의 VRAM 용량에 따라 Out of Memory가 발생할 수 있습니다.
         - **프롬프트**: 공란으로 비워도 되며, 프롬프트로(영문) 입력 시 기본 System Prompt를 기본으로 하여 특정 관점에 더 집중한 분석을 할 수 있습니다.
+        - **영상코덱**: 업로드한 영상의 포맷(확장자)과 해당 포맷에서 지원하는 코덱이 일치하지 않는 경우, 경고나 오류가 발생할 수 있습니다.
         """)
 
     demo.queue().launch(
