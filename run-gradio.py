@@ -35,7 +35,8 @@ def _get_args():
 
 
 def _load_model_processor(args):
-    device_map = 'cpu' if args.cpu_only else 'auto'
+    # device_map = 'cpu' if args.cpu_only else 'auto'
+    device_map = {"": "cuda:0"}  # 모델 전체를 GPU 0에 할당
 
     if args.flash_attn2:
         model = Qwen2VLForConditionalGeneration.from_pretrained(
@@ -203,14 +204,16 @@ def _transform_messages_safe(original_messages, system_prompt=None, fps=1.5):
 # ---------------------------
 def call_local_model_stream_safe(model, processor, messages, system_prompt=None, max_tokens=768, fps=1.5):
     """
-    기존 스트리밍 생성 함수 + 분석 결과를 outputs/영상파일명.txt에 저장
+    QwenVL2 스트리밍 안정화 버전
+    - 영상 입력 포함 시 스트리밍 없이 최종 텍스트만 반환
+    - 분석 결과는 outputs/영상파일명.txt에 저장
     """
     print(f"🔄 Starting generation with {len(messages)} messages...")
     if system_prompt:
         print(f"📋 System prompt: {system_prompt[:50]}...")
     print(f"🎯 Max tokens: {max_tokens}")
 
-    # 분석 텍스트를 저장할 파일명 결정
+    # 분석 텍스트 저장용 파일명 결정
     video_filename = None
     for message in messages:
         q, _ = message
@@ -235,48 +238,52 @@ def call_local_model_stream_safe(model, processor, messages, system_prompt=None,
         inputs = inputs.to(model.device)
         tokenizer = processor.tokenizer
 
-        streamer = TextIteratorStreamer(tokenizer, timeout=300.0, skip_prompt=True, skip_special_tokens=True)
-
-        gen_kwargs = {
-            "max_new_tokens": int(max_tokens),
-            "streamer": streamer,
-            "do_sample": True,
-            "temperature": 0.65,
-            "top_p": 0.9,
-            **inputs
-        }
-
-        thread = Thread(target=model.generate, kwargs=gen_kwargs)
-        thread.start()
+        # 영상 포함 여부 체크
+        has_video = any(
+            item.get("type") == "video"
+            for msg in transformed_messages
+            for item in msg.get("content", [])
+        )
 
         generated_text = ""
-        char_count = 0
-        try:
-            for new_text in streamer:
-                generated_text += new_text
-                char_count += len(new_text)
-                if char_count % 50 == 0:
-                    print(f"📝 Generated {char_count} chars...")
-                # 스트리밍 출력
-                yield _remove_image_special(_parse_text(generated_text))
-        except Exception as stream_error:
-            print(f"⚠️ Streaming error: {stream_error}")
-            thread.join(timeout=10)
-            yield _remove_image_special(_parse_text(f"{generated_text}\n\n---\n⚠️ Generation interrupted: {stream_error}"))
+
+        if has_video:
+            # 영상 포함 → 일괄 생성 (스트리밍 제거)
+            print("🎬 Video detected → generating full text without streaming...")
+            output_tokens = model.generate(**inputs, max_new_tokens=max_tokens)
+            generated_text = tokenizer.batch_decode(output_tokens, skip_special_tokens=True)[0]
+            yield _remove_image_special(_parse_text(generated_text))
+        else:
+            # 영상 없음 → 기존 스트리밍
+            streamer = TextIteratorStreamer(tokenizer, timeout=300.0, skip_prompt=True, skip_special_tokens=True)
+            gen_kwargs = {
+                "max_new_tokens": int(max_tokens),
+                "streamer": streamer,
+                "do_sample": True,
+                "temperature": 0.65,
+                "top_p": 0.9,
+                **inputs
+            }
+            thread = Thread(target=model.generate, kwargs=gen_kwargs)
+            thread.start()
+            try:
+                for new_text in streamer:
+                    generated_text += new_text
+                    yield _remove_image_special(_parse_text(generated_text))
+            finally:
+                thread.join(timeout=10)
 
         # 최종 텍스트 파일 저장
         with open(txt_path, "w", encoding="utf-8") as f:
             f.write(generated_text)
         print(f"✅ Analysis text saved: {txt_path}")
 
-        # 최종 스트리밍 출력
-        yield _remove_image_special(_parse_text(generated_text))
-
     except Exception as e:
         print(f"❌ Generation error: {e}")
         import traceback
         traceback.print_exc()
         yield f"❌ Error occurred: {e}\n💡 Suggestions: Shorter video, lower resolution, check file path."
+
 
 
 def add_text_safe(history, task_history, text):
