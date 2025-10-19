@@ -33,31 +33,45 @@ def _get_args():
     parser.add_argument('--server-port', type=int, default=7860)
     parser.add_argument('--server-name', type=str, default='0.0.0.0')
     parser.add_argument('--system-prompt', type=str, default=None)
+    # ✅ GPU 디바이스 지정 옵션 추가
+    parser.add_argument('--device', type=int, default=None, 
+                       help='CUDA device number (e.g., 0, 1). If not specified, uses auto device mapping.')
     args = parser.parse_args()
     return args
 
 
 def _load_model_processor(args):
 
-    device_map = "auto"
+    # device_map = "auto"
     # device_map = {"": "cuda:0"} 
     # device_map = {"": 1}  # GPU 1번으로 통째로 올림
     # device_map = "balanced"
     # offload_folder = "./offload"
+    if args.device is not None:
+        # 특정 GPU 번호 지정
+        device_map = {"": args.device}  # 또는 {"": f"cuda:{args.device}"}
+        print(f"🎮 Using GPU {args.device}")
+    else:
+        # auto 모드
+        device_map = "auto"
+        print("🤖 Using auto device mapping")    
 
     if args.flash_attn2:
         model = Qwen2VLForConditionalGeneration.from_pretrained(
             args.checkpoint_path,
             cache_dir=str(MODEL_DIR),
-            torch_dtype='auto',
             attn_implementation='flash_attention_2',
-            device_map=device_map
+            device_map=device_map,
+            torch_dtype=torch.float16,  # ✅ float16 사용
+            low_cpu_mem_usage=True      # ✅ 메모리 절약
         )
     else:
         model = Qwen2VLForConditionalGeneration.from_pretrained(
             args.checkpoint_path, 
             device_map=device_map,
-            cache_dir=str(MODEL_DIR)
+            cache_dir=str(MODEL_DIR),
+            torch_dtype=torch.float16,  # ✅ float16 사용
+            low_cpu_mem_usage=True      # ✅ 메모리 절약
         )
 
     processor = AutoProcessor.from_pretrained(args.checkpoint_path)
@@ -107,7 +121,7 @@ def _parse_text(text):
 # ---------------------------
 # 🔧 비디오 전처리 함수
 # ---------------------------
-def preprocess_video(video_path, fps=2.5, max_width=720, max_height=720, timeout=30):
+def preprocess_video(video_path, fps=2.5, max_width=480, max_height=480, timeout=30):
     try:
         # ✅ 절대 경로로 변환
         video_path = os.path.abspath(video_path)
@@ -196,7 +210,7 @@ def _transform_messages_safe(original_messages, system_prompt=None, fps=2.5):
                     q_content.append({
                         "type": "video",
                         "video": video_url,
-                        "max_pixels": 400 * 400,
+                        "max_pixels": 480 * 480,
                         "fps": fps,
                         "frame_sampling": "uniform",
                     })
@@ -302,6 +316,14 @@ def call_local_model_stream_safe(model, processor, messages, system_prompt=None,
         traceback.print_exc()
         yield f"❌ Error occurred: {e}\n💡 Suggestions: Shorter video, lower resolution, check file path."
 
+    finally:
+        # ✅ 메모리 정리
+        if 'inputs' in locals():
+            del inputs
+        if 'output_tokens' in locals():
+            del output_tokens
+        _gc()  # GPU 메모리 정리
+
 
 def add_text_safe(history, task_history, text):
     task_text = text.strip()
@@ -393,8 +415,8 @@ Remember: Your role is purely observational and descriptive. Provide factual, de
             )
             fps_slider = gr.Slider(
                 minimum=0.5,
-                maximum=5.0,
-                value=2.5,
+                maximum=2.0,  # ✅ 2.5 → 2.0으로 감소
+                value=1.0,    # ✅ 기본값 1.0
                 step=0.1,
                 label="Video Sampling FPS",
                 info="Adjust the frames per second for video processing. Lower FPS reduces VRAM usage."

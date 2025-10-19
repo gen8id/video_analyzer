@@ -27,7 +27,6 @@ services:
     environment:
       # GPU 선택 (필요 시 GPU ID 지정)
       # - CUDA_VISIBLE_DEVICES=0
-      - GRADIO_SHARE=1     # 필요 시 환경변수 기반 옵션도 사용 가능      
       - HF_HOME=/workspace/video_analyzer/models
       - HF_HUB_CACHE=/workspace/video_analyzer/models
       - PYTHONUNBUFFERED=1
@@ -35,7 +34,6 @@ services:
       - OMP_NUM_THREADS=8
       - MKL_NUM_THREADS=8
       - TMPDIR=/dev/shm
-      # - HF_HOME=/root/.cache/huggingface
 
     stdin_open: true
     tty: true
@@ -44,4 +42,8 @@ services:
 
     working_dir: /workspace/video_analyzer
 
-    command: ["python", "run-gradio.py", "--share"] 
+    # GPU 자동 탐색, 기본 0번 GPU
+    command: ["python", "run-gradio.py"] 
+
+    # 여러개 GPU가 있는 경우 특정 GPU 번호를 지정하거나 gradio live를 사용하려는 경우
+    # command: ["python", "run-gradio.py", " --device 3", "--share"] 
