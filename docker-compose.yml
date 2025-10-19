@@ -26,7 +26,7 @@ services:
 
     environment:
       # GPU 선택 (필요 시 GPU ID 지정)
-      # - CUDA_VISIBLE_DEVICES=0
+      # - CUDA_VISIBLE_DEVICES=1
       - HF_HOME=/workspace/video_analyzer/models
       - HF_HUB_CACHE=/workspace/video_analyzer/models
       - PYTHONUNBUFFERED=1
@@ -38,7 +38,7 @@ services:
     stdin_open: true
     tty: true
     restart: unless-stopped
-    shm_size: "24gb"
+    shm_size: "16gb"
 
     working_dir: /workspace/video_analyzer
 
