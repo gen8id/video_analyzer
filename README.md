@@ -11,7 +11,7 @@
 - Docker >= 24
 - docker-compose >= 2.10
 - GPU 사용 권장 (CUDA 지원), CPU도 가능하지만 속도 저하
-- 최소 8GB 이상 VRAM 권장
+- 최소 24GB 이상 VRAM 권장
 
 ---
 
